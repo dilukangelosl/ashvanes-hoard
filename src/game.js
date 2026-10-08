@@ -647,18 +647,27 @@ async function intro() {
   $('under').style.opacity = 0; $('bar').style.opacity = 0; $('buy').style.opacity = 0;
   scrim(true);
   crew.forEach((sp) => { sp.op = 0; });
+  // phones get their own staging: the dragon big and centred, the crew in a 2x2 grid below the text
+  const P = L.name === 'port';
+  if (P) {
+    Object.assign(L, { dragon: { h: 600, left: 70, feet: L.H * 0.56 }, story: L.H * 0.08, banner: L.H * 0.42 });
+    $('story').style.top = L.story + 'px'; $('banner').style.top = L.banner + 'px'; seat();
+  }
+  const spot = (i) => (P
+    ? { x: 450 + (i % 2 ? 190 : -190), y: L.H * (i < 2 ? 0.63 : 0.81), size: 330 }
+    : { x: 1010 + (i - 1.5) * L.crewSize * 1.05, y: L.row - 130, size: L.crewSize * 1.1 });
   await say('Beneath the volcano Kharros sleeps <b>Ashvane, the Ember King</b>', 1.6);
   roar(); coins(30);
   await wait(1.6);
   if (breathing) await breathing;
   await say('Four thieves have tunnelled into his vault', 0.6);
   for (const [i, sp] of crew.entries()) {
-    Object.assign(sp, { x: (L.name === 'land' ? 1010 : L.W / 2) + (i - 1.5) * L.crewSize * 1.05, y: L.row - 130, size: L.crewSize * 1.1, s: 0.2, op: 1 });
+    Object.assign(sp, spot(i), { s: 0.2, op: 1 });
     tween(sp, { s: 1 }, 0.45, ease.back);
-    burst('magic', sp.x, sp.y, L.crewSize * 1.4);
+    burst('magic', sp.x, sp.y, sp.size * 1.3);
     SFX.coin();
     const [n, role] = NAMES[sp.clip];
-    const tag = pop(n, sp.x, sp.y + L.crewSize * 0.62);
+    const tag = pop(n, sp.x, sp.y + sp.size * 0.56);
     tag.innerHTML = `${n}<small style="display:block;font:700 22px/1.2 var(--ui);color:var(--ash)">${role}</small>`;
     tag.style.animationDuration = '3s';
     await wait(0.5);
@@ -667,9 +676,15 @@ async function intro() {
   await say('Every win makes noise. Fill his <b>wrath</b> and the reels burn', 2.2);
   await say('Find four <b>Vault Keys</b> to open the Molten Treasury', 2.2);
   story.style.opacity = 0;
+  await Promise.all(crew.map((sp, i) => tween(sp, { y: sp.y + 600, op: 0 }, 0.5, ease.in, i * 0.06)));
   SFX.boom(); shake();
   await banner("Ashvane's Hoard<small>Steal up to 10,000× your bet</small>", 2.6);
-  await Promise.all(crew.map((sp, i) => tween(sp, { y: sp.y + 600, op: 0 }, 0.5, ease.in, i * 0.06)));
+  if (P) {
+    // the dragon returns to his perch above the board
+    await Promise.all([scene.dragon, scene.breath].map((sp) => tween(sp, { op: 0 }, 0.25)));
+    resize(); scene.breath.op = 0; // rebuilds the game layout
+    tween(scene.dragon, { op: 1 }, 0.4);
+  }
   scrim(false);
   await reveal();
   world.removeEventListener('pointerdown', skip);
