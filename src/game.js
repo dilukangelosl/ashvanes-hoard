@@ -19,14 +19,21 @@ const LAYOUTS = {
   land: { name: 'land', W: 1600, H: 900, cell: 96, board: [487.5, 182], logo: [195, 92, 390], dragon: { h: 430, left: -14, feet: 772 }, wrath: [195, 196, 330],
     chest: [1415, 330, 430], fs: [1415, 470], buy: [1415, 560], braziers: [[1278, 788, 300], [1552, 788, 300]], bar: [0, 790, 1600, 110],
     story: 230, banner: 300, bigwin: 230, row: 600, crewSize: 230 },
-  port: { name: 'port', W: 900, H: 1600, cell: 98, board: [131, 800], logo: [450, 78, 540], dragon: { h: 400, left: -16, feet: 655 }, wrath: [735, 168, 280],
-    chest: [735, 390, 360], fs: [735, 500], buy: [735, 560], braziers: [], bar: [0, 1410, 900, 190],
-    story: 880, banner: 900, bigwin: 860, row: 1180, crewSize: 170 },
 };
 // the frame clip's opening, as fractions of its video cell (measured with tools/measure_frame.py)
 const HOLE = { x: 0.1574, y: 0.2481, w: 0.6869, h: 0.5463 };
 // the dragon clips share one 16:9 canvas: dragon body height, left edge, feet and mouth as fractions of it
 const DRAGON = { bodyH: 0.644, left: 0.05, feet: 0.92, mouth: [0.43, 0.415] };
+// Portrait is laid out for the phone's real aspect: the bar and board hug the bottom and the
+// space above (logo, dragon, chest) grows or shrinks with the screen.
+function portrait(H) {
+  const board = [131, H - 852], top = H - 1036, region = top, s = clamp(region / 616, 0.68, 1.45), ls = Math.min(1, s);
+  const logoW = 540 * ls, logoY = 24 + 118 * ls;
+  return { name: 'port', W: 900, H, cell: 98, board, logo: [450, logoY, logoW], wrath: [735, logoY + 104 * ls, 280],
+    dragon: { h: clamp(400 * s, 270, 560), left: -16, feet: top + 50 }, chest: [728, top - 150 * s, 340 * Math.min(s, 1.25)],
+    buy: [728, top - 150 * s + 150 * Math.min(s, 1.2)], braziers: [], bar: [0, H - 240, 900, 240],
+    story: board[1] + 60, banner: board[1] + 110, bigwin: board[1] + 40, row: H - 430, crewSize: 170 };
+}
 let L = LAYOUTS.land;
 const view = { k: 1, ox: 0, oy: 0, dpr: 1 };
 const X = (x) => (view.ox + x * view.k) * view.dpr, Y = (y) => (view.oy + y * view.k) * view.dpr, PK = () => view.k * view.dpr;
@@ -232,15 +239,20 @@ const bet = () => BETS[S.betI];
 const FORCED = (QS.get('seeds') ?? '').split(',').filter(Boolean).map(Number);
 S.wrath = clamp(+(QS.get('wrath') ?? 0), 0, E.WRATH_MAX - 1);
 
+// A fixed game window, like casino lobbies: 16:9 letterboxed on desktop and landscape, and on
+// portrait phones a window that fills the screen with a layout made for its exact aspect.
 function resize() {
-  const w = innerWidth, h = innerHeight;
-  L = w / h < 0.9 ? LAYOUTS.port : LAYOUTS.land;
+  const vw = innerWidth, vh = innerHeight;
+  L = vw / vh < 0.9 ? portrait(clamp((900 * vh) / vw, 1450, 2000)) : LAYOUTS.land;
   document.body.classList.toggle('portrait', L.name === 'port');
-  view.k = Math.min(w / L.W, h / L.H);
-  view.ox = (w - L.W * view.k) / 2; view.oy = L.name === 'port' ? h - L.H * view.k : (h - L.H * view.k) / 2; // tall phones: bar hugs the bottom
+  view.k = Math.min(vw / L.W, vh / L.H);
+  const w = Math.round(L.W * view.k), h = Math.round(L.H * view.k);
+  Object.assign(world.style, { width: w + 'px', height: h + 'px', left: Math.round((vw - w) / 2) + 'px', top: Math.round((vh - h) / 2) + 'px' });
+  world.classList.toggle('fill', w >= vw - 2 && h >= vh - 2);
+  view.ox = 0; view.oy = 0;
   view.dpr = Math.min(devicePixelRatio || 1, MOBILE ? 1.75 : 2);
   for (const c of [cv, fxc]) { c.width = Math.round(w * view.dpr); c.height = Math.round(h * view.dpr); }
-  for (const id of ['under', 'top']) Object.assign($(id).style, { width: L.W + 'px', height: L.H + 'px', transform: `translate(${view.ox}px,${view.oy}px) scale(${view.k})` });
+  for (const id of ['under', 'top']) Object.assign($(id).style, { width: L.W + 'px', height: L.H + 'px', transform: `scale(${view.k})` });
   const bw = L.cell * CW * E.COLS, bh = L.cell * E.ROWS;
   place($('board'), L.board[0] - 8, L.board[1] - 8, bw + 16, bh + 16);
   $('cells').style.grid = `repeat(${E.ROWS}, 1fr) / repeat(${E.COLS}, 1fr)`;
@@ -489,7 +501,8 @@ async function coinsToOrb(gmult) {
 }
 function centerOf(el) {
   const r = el.getBoundingClientRect();
-  return [(r.left + r.width / 2 - view.ox) / view.k, (r.top + r.height / 2 - view.oy) / view.k];
+  const wr = world.getBoundingClientRect();
+  return [(r.left + r.width / 2 - wr.left) / view.k, (r.top + r.height / 2 - wr.top) / view.k];
 }
 
 async function keys(step, free) {
@@ -628,14 +641,19 @@ async function intro() {
   setTimeout(() => world.addEventListener('pointerdown', skip), 500); // not the tap that started it
   const story = $('story');
   const say = async (html, hold) => { story.style.opacity = 0; await wait(0.3); story.innerHTML = html; story.style.opacity = 1; await wait(hold); };
+  // a clean stage for the story: only the dragon and the crew; the board is revealed at the end
+  const stage = () => [scene.frame, scene.chest, scene.logo, ...scene.braziers, ...grid.flat()].filter(Boolean);
+  stage().forEach((sp) => (sp.op = 0));
+  $('under').style.opacity = 0; $('bar').style.opacity = 0; $('buy').style.opacity = 0;
   scrim(true);
   crew.forEach((sp) => { sp.op = 0; });
   await say('Beneath the volcano Kharros sleeps <b>Ashvane, the Ember King</b>', 1.6);
   roar(); coins(30);
   await wait(1.6);
+  if (breathing) await breathing;
   await say('Four thieves have tunnelled into his vault', 0.6);
   for (const [i, sp] of crew.entries()) {
-    Object.assign(sp, { x: L.W / 2 + (i - 1.5) * L.crewSize * 1.05, y: L.row - 130, size: L.crewSize * 1.1, s: 0.2, op: 1 });
+    Object.assign(sp, { x: (L.name === 'land' ? 1010 : L.W / 2) + (i - 1.5) * L.crewSize * 1.05, y: L.row - 130, size: L.crewSize * 1.1, s: 0.2, op: 1 });
     tween(sp, { s: 1 }, 0.45, ease.back);
     burst('magic', sp.x, sp.y, L.crewSize * 1.4);
     SFX.coin();
@@ -653,9 +671,27 @@ async function intro() {
   await banner("Ashvane's Hoard<small>Steal up to 10,000× your bet</small>", 2.6);
   await Promise.all(crew.map((sp, i) => tween(sp, { y: sp.y + 600, op: 0 }, 0.5, ease.in, i * 0.06)));
   scrim(false);
+  await reveal();
   world.removeEventListener('pointerdown', skip);
   T = S.turbo ? 0.55 : 1;
   story.innerHTML = '';
+}
+
+// the board assembles: frame slams in, props light up, the opening grid drops in column by column
+async function reveal() {
+  T = Math.min(T, 1);
+  $('under').style.opacity = 1;
+  const f = scene.frame;
+  f.s = 1.12; tween(f, { op: 1, s: 1 }, 0.5, ease.back);
+  SFX.boom(); shake();
+  for (const sp of [scene.logo, scene.chest, ...scene.braziers]) { sp.s = 0.6; tween(sp, { op: 1, s: 1 }, 0.5, ease.back, 0.15); }
+  await wait(0.3);
+  await Promise.all(grid.flatMap((col, c) => col.map((sp, r) => {
+    const y = sp.y; sp.y -= L.cell * (E.ROWS + 1); sp.op = 1;
+    return tween(sp, { y }, 0.4, ease.back, c * 0.07 + (E.ROWS - 1 - r) * 0.03);
+  })));
+  SFX.land();
+  $('bar').style.opacity = 1; $('buy').style.opacity = 1;
 }
 
 // ---------------------------------------------------------------- round flow
