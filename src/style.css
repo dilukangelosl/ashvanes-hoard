@@ -1,0 +1,134 @@
+:root {
+  --obsidian: #140b08; --cinder: #2a1510; --iron: #4a2717; --ember: #ff6a1a; --flame: #ffb02e;
+  --gold: #ffd774; --ash: #f1e4cf; --blood: #c3132f; --display: "Grenze Gotisch", serif; --ui: "Saira Condensed", system-ui, sans-serif;
+}
+html, body { margin: 0; height: 100%; background: #070302; overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none }
+body { font: 600 18px/1.2 var(--ui); color: var(--ash); font-variant-numeric: tabular-nums }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px }
+[hidden] { display: none !important }
+
+#world { position: fixed; inset: 0; overflow: hidden }
+#world.shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97) both }
+@keyframes shake { 10%,90% { transform: translate(-3px,2px) } 20%,80% { transform: translate(6px,-4px) } 30%,50%,70% { transform: translate(-10px,5px) } 40%,60% { transform: translate(10px,-6px) } }
+.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 1.2s }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none }
+#opal { z-index: 3 } #fx { z-index: 4 }
+#scrim { position: absolute; inset: 0; z-index: 2; background: radial-gradient(ellipse at 50% 45%, #1a0703aa, #050100f2 75%); opacity: 0; transition: opacity .5s; pointer-events: none }
+#scrim.on { opacity: 1 }
+#scrim.red { background: radial-gradient(ellipse at 50% 50%, #ff3a0a33, #3a0500e0 80%) }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0 }
+#under { z-index: 1 } #top { z-index: 5; pointer-events: none }
+#top > * { position: absolute }
+#top button, #bar { pointer-events: auto }
+
+/* board: dark iron vault with a molten seam */
+#board { position: absolute; border-radius: 6px; background: radial-gradient(ellipse at 50% 30%, #2a120bd9, #0b0605f0) }
+#cells { position: absolute; inset: 0; display: grid }
+#cells i { border: 1px solid #ffb02e10; border-radius: 10px; margin: 3px; background: radial-gradient(#ffffff06, transparent 70%) }
+#cells i.hot { background: radial-gradient(#ff6a1a55, transparent 70%); border-color: #ffb02e66 }
+
+#logo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); margin: 0 }
+
+#fsInfo { text-align: center; transform: translateX(-50%); pointer-events: none }
+.fsLabel { font: 700 20px/1 var(--ui); letter-spacing: .06em; color: var(--flame); margin-top: 8px }
+#fsLeft { font: 900 64px/1 var(--display); color: var(--ash); text-shadow: 0 3px 0 #000, 0 0 16px #ff6a1a; margin-top: 6px }
+#orb { font: 900 76px/1 var(--display); color: #fff6d6; text-shadow: 0 0 10px #000, 0 0 24px #ff6a1a, 0 4px 0 #5a1d06 }
+.fsLabel { text-shadow: 0 2px 4px #000 }
+#orb.pulse, #fsLeft.pulse { animation: pulse .6s cubic-bezier(.2,2,.4,1) }
+@keyframes pulse { 40% { transform: scale(1.35); filter: brightness(1.8) } }
+
+#wrath { position: absolute; text-align: center; padding: 8px 0 12px; border-radius: 14px; background: linear-gradient(#140805d9, #0a0403e6); box-shadow: 0 0 0 2px #6b341866, 0 6px 20px #000a }
+.wlabel { font: 800 24px/1 var(--display); color: #ff9a5a; margin-bottom: 6px; text-shadow: 0 2px 0 #000 }
+#pips { display: flex; justify-content: center; gap: 8px }
+#pips i { width: 26px; height: 34px; border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%; background: #2a120b; box-shadow: inset 0 0 0 2px #5a2a14; transition: background .3s, box-shadow .3s }
+#pips i.on { background: radial-gradient(circle at 50% 70%, #fff3b0, var(--flame) 35%, var(--ember) 70%, #8a1d05); box-shadow: 0 0 14px var(--ember); animation: flick .35s infinite alternate }
+#wrath.full #pips i { animation: flick .12s infinite alternate; box-shadow: 0 0 22px #ff3d00 }
+@keyframes flick { to { transform: scaleY(1.12) translateY(-2px); filter: brightness(1.25) } }
+
+#labels > b { position: absolute; transform: translate(-50%, -50%); font: 900 30px/1 var(--display); color: #fff6d6; text-shadow: 0 0 6px #000, 0 2px 0 #5a1d06, 0 0 14px var(--ember); white-space: nowrap }
+#labels > b.big { color: #ffdf6a; font-size: 36px }
+#pops > b { position: absolute; transform: translate(-50%, -50%); font: 900 46px/1 var(--display); color: var(--gold); text-shadow: 0 3px 0 #4a1404, 0 0 20px #ff6a1a; white-space: nowrap; animation: pop 1.3s ease-out forwards }
+@keyframes pop { 0% { transform: translate(-50%,-50%) scale(.3); opacity: 0 } 15% { transform: translate(-50%,-50%) scale(1.25); opacity: 1 } 30% { transform: translate(-50%,-50%) scale(1) } 100% { transform: translate(-50%,-120%) scale(1); opacity: 0 } }
+#pops > b.fly { animation: none; transition: left .55s cubic-bezier(.5,0,.7,.4), top .55s cubic-bezier(.5,0,.7,.4), opacity .2s .5s }
+
+#winAmt { color: var(--gold) }
+#winAmt.hit { animation: pulse .5s; color: var(--gold) }
+
+#banner, #story, #bigwin { left: 0; right: 0; text-align: center; pointer-events: none }
+#banner { font: 900 110px/1 var(--display); color: var(--gold); text-shadow: 0 6px 0 #3a0e02, 0 0 40px #ff3d00; opacity: 0 }
+#banner small { display: block; font: 700 34px/1.2 var(--ui); color: var(--ash); letter-spacing: .08em; text-shadow: 0 2px 4px #000 }
+#banner.show { animation: slam 2.2s cubic-bezier(.2,.9,.3,1) forwards }
+@keyframes slam { 0% { transform: scale(2.6); opacity: 0 } 14% { transform: scale(1); opacity: 1 } 80% { transform: scale(1.04); opacity: 1 } 100% { transform: scale(1.1); opacity: 0 } }
+#story { font: 600 44px/1.25 var(--display); color: var(--ash); text-shadow: 0 3px 8px #000; padding: 0 6%; transition: opacity .4s }
+#story b { color: var(--gold) }
+#bigwin { opacity: 0; transition: opacity .3s }
+#bigwin.on { opacity: 1 }
+#bwTier { font: 900 150px/1 var(--display); background: linear-gradient(#fff6c8, var(--gold) 40%, #e0561a 85%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 6px 0 #3a0e02) drop-shadow(0 0 30px #ff3d00) }
+#bwTier.slam { animation: tier .7s cubic-bezier(.2,1.6,.4,1) }
+@keyframes tier { from { transform: scale(3); opacity: 0 } }
+#bwAmt { font: 900 120px/1.1 var(--display); color: #fff6d6; text-shadow: 0 5px 0 #3a0e02, 0 0 30px #ff6a1a }
+
+/* bottom bar */
+#bar { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 28px; box-sizing: border-box;
+  background: linear-gradient(#0b0504e6, #050201f8); border-top: 2px solid #6b341866; box-shadow: 0 -10px 30px #0008 }
+.readout { display: grid; text-align: center; min-width: 120px }
+.readout small { font: 700 16px/1 var(--ui); letter-spacing: .14em; color: #c9a27a }
+.readout b { font: 800 34px/1.1 var(--ui); color: var(--ash) }
+.bet { display: flex; align-items: center; gap: 8px }
+.bet button { width: 52px; height: 52px; border-radius: 50%; border: 0; background: #2a1510; box-shadow: inset 0 0 0 2px #6b3418; font: 800 30px/1 var(--ui) }
+#spin { width: 128px; height: 128px; flex: none; border-radius: 50%; border: 0; color: #2a0c02; margin-top: -40px;
+  background: radial-gradient(circle at 50% 35%, #fff2b0, var(--flame) 45%, var(--ember) 80%, #a1300a);
+  box-shadow: 0 0 0 6px #1a0a06, 0 0 0 9px #ffb02e88, 0 0 40px #ff6a1a99, inset 0 -8px 0 #0003; transition: transform .15s, filter .2s }
+#spin svg { width: 60%; height: 60% }
+#spin:active { transform: scale(.94) }
+#spin.busy svg { animation: rot .8s linear infinite }
+@keyframes rot { to { transform: rotate(360deg) } }
+#spin:disabled { filter: grayscale(.7) brightness(.6) }
+.tools { display: flex; gap: 8px }
+.tool { width: 64px; height: 64px; border-radius: 14px; border: 0; background: #1e0e0a; box-shadow: inset 0 0 0 2px #4a2717; display: grid; place-content: center; font-size: 24px; line-height: 1 }
+.tool small { font: 700 13px/1 var(--ui); letter-spacing: .08em; color: #c9a27a; margin-top: 4px }
+.tool[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--flame), 0 0 14px #ff6a1a66; color: var(--gold) }
+#info { font: 800 26px/1 var(--display) }
+#buy { transform: translateX(-50%); border: 0; border-radius: 14px; padding: 8px 18px; display: grid; text-align: center; color: #2a0c02;
+  background: linear-gradient(#ffe9a0, var(--flame) 55%, #c84a10); box-shadow: inset 0 -4px 0 #0004, 0 0 22px #ff6a1a66; pointer-events: auto }
+#buy small { font: 800 15px/1 var(--ui); letter-spacing: .1em } #buy b { font: 900 26px/1 var(--ui) }
+#buy:disabled { opacity: .45 }
+#buyHit { position: absolute; border-radius: 50%; pointer-events: auto; background: transparent; border: 0; cursor: pointer }
+#bar button:disabled { opacity: .45; cursor: default }
+.portrait #bar { flex-wrap: wrap; justify-content: center; align-content: center; row-gap: 14px; padding: 10px 24px }
+.portrait #spin { margin-top: 0; order: 2 }
+.portrait .readout:first-child { order: 0 } .portrait .bet { order: 1 } .portrait #winbox { order: 3 } .portrait .tools { order: 4 }
+
+#cine { position: absolute; inset: 0; z-index: 8; background: #000; display: grid; place-items: center }
+#cine video { width: 100%; height: 100%; object-fit: cover; animation: cinein .6s }
+@keyframes cinein { from { opacity: 0 } }
+#cineText { position: absolute; left: 0; right: 0; bottom: 12%; text-align: center; font: 900 min(9vw, 96px)/1 var(--display); color: var(--gold); text-shadow: 0 5px 0 #000, 0 0 40px #ff3d00; opacity: 0; transition: opacity .5s }
+#cineText.on { opacity: 1 }
+#cineText small { display: block; font: 700 min(4vw, 34px)/1.3 var(--ui); color: var(--ash); letter-spacing: .1em }
+
+#loader { position: absolute; inset: 0; z-index: 9; display: grid; place-content: center; text-align: center; gap: 10px;
+  background: radial-gradient(ellipse at 50% 40%, #2a0f06, #050100 75%) }
+#loader h2 { margin: 0; font: 900 min(14vw, 120px)/1 var(--display); color: var(--gold); text-shadow: 0 0 30px #ff3d00 }
+#loader p { margin: 0; color: #c9a27a }
+.lbar { width: min(70vw, 420px); height: 8px; margin: 10px auto; border-radius: 4px; background: #2a1510; overflow: hidden }
+.lbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--ember), var(--gold)); transition: width .3s }
+#go { justify-self: center; margin-top: 8px; border: 0; border-radius: 999px; padding: 16px 40px; font: 900 34px/1 var(--display); color: #2a0c02;
+  background: linear-gradient(#ffe9a0, var(--flame) 55%, #c84a10); box-shadow: 0 0 30px #ff6a1a88 }
+.made { font-size: 15px; margin-top: 18px !important } .made a { color: var(--flame) }
+
+dialog#modal { border: 0; border-radius: 18px; padding: 0; max-width: min(92vw, 820px); max-height: 88vh; background: #120806; color: var(--ash); box-shadow: 0 0 0 2px #6b3418, 0 20px 80px #000 }
+dialog#modal::backdrop { background: #000b }
+.mbody { padding: 22px 28px; overflow: auto; max-height: calc(88vh - 44px) }
+.mbody h3 { font: 900 40px/1 var(--display); color: var(--gold); margin: 0 0 6px }
+.mbody h4 { font: 800 26px/1.1 var(--display); color: var(--flame); margin: 18px 0 6px }
+.mbody p { margin: 6px 0; line-height: 1.35; font-weight: 500 }
+.ptable { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px }
+.ptable div { display: flex; gap: 8px; align-items: center; background: #1e0e0a; border-radius: 12px; padding: 6px }
+.ptable img { width: 64px; height: 64px } .ptable span { font: 600 15px/1.35 var(--ui) }
+.mact { display: flex; gap: 12px; justify-content: flex-end; padding: 0 28px 22px }
+.mact button { border: 0; border-radius: 999px; padding: 12px 26px; font: 800 22px/1 var(--ui); background: #2a1510; box-shadow: inset 0 0 0 2px #6b3418 }
+.mact button.primary { color: #2a0c02; background: linear-gradient(#ffe9a0, var(--flame) 55%, #c84a10); box-shadow: none }
+#stats { position: absolute; right: 8px; top: 8px; z-index: 6; font: 500 12px/1.3 var(--ui); color: #c9a27a; background: #0008; padding: 4px 8px; border-radius: 6px; pointer-events: none }
+
+@media (prefers-reduced-motion: reduce) { #world.shake { animation: none } #pips i.on, #wrath.full #pips i { animation: none } }

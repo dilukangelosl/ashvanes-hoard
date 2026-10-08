@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Ashvane's Hoard</title>
+<meta name="description" content="A dragon-heist slot where every symbol, the dragon, the crew and every effect is a transparent video sprite, rendered with opal-sprites.">
+<link rel="icon" href="media/thumbs/egg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600;800;900&family=Saira+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div id="world">
+  <img id="bgBase" class="bg" src="media/bg_base.jpg" alt="">
+  <img id="bgFree" class="bg" src="media/bg_free.jpg" alt="" style="opacity:0">
+  <div class="stage" id="under">
+    <div id="board"><div id="cells"></div></div>
+    <div id="wrath" aria-label="Ashvane's wrath"><div class="wlabel">Ashvane's wrath</div><div id="pips"></div></div>
+  </div>
+  <div id="scrim"></div>
+  <canvas id="opal"></canvas>
+  <canvas id="fx"></canvas>
+  <div class="stage" id="top">
+    <h1 id="logo">Ashvane's Hoard</h1>
+    <div id="fsInfo" hidden><div id="orb">×0</div><div class="fsLabel">Hoard multiplier</div><div id="fsLeft">10</div><div class="fsLabel">Free spins left</div></div>
+    <button id="buy" aria-label="Buy the Molten Treasury bonus"><small>Buy bonus</small><b id="buyCost">100.00</b></button>
+    <div id="labels"></div>
+    <div id="pops"></div>
+    <div id="banner"></div>
+    <div id="story"></div>
+    <div id="bigwin"><div id="bwTier"></div><div id="bwAmt"></div></div>
+    <div id="bar">
+      <div class="readout"><small>Balance</small><b id="bal">1,000.00</b></div>
+      <div class="bet">
+        <button id="betDown" aria-label="Lower bet">−</button>
+        <div class="readout"><small>Bet</small><b id="bet">1.00</b></div>
+        <button id="betUp" aria-label="Raise bet">+</button>
+      </div>
+      <div class="readout" id="winbox"><small id="winLabel">Win</small><b id="winAmt">0.00</b></div>
+      <button id="spin" aria-label="Spin"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M50 30a18 18 0 1 1-6-13" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M46 6l1 14-14-1z" fill="currentColor"/></svg></button>
+      <div class="tools">
+        <button id="turbo" class="tool" aria-pressed="false" aria-label="Turbo">⚡<small>Turbo</small></button>
+        <button id="auto" class="tool" aria-label="Autoplay">↻<small id="autoN">Auto</small></button>
+        <button id="snd" class="tool" aria-pressed="true" aria-label="Sound">♪<small>Sound</small></button>
+        <button id="info" class="tool" aria-label="Paytable and rules">i<small>Info</small></button>
+      </div>
+    </div>
+  </div>
+  <div id="cine" hidden><video id="vault" src="media/vault.mp4" poster="media/vault.jpg" muted playsinline preload="auto"></video><div id="cineText"></div></div>
+  <div id="loader"><h2>Ashvane's Hoard</h2><p id="loadMsg">Prying open the vault…</p><div class="lbar"><i id="lfill"></i></div><button id="go" hidden>Begin the heist</button><p class="made">Every sprite is a transparent video, rendered with <a href="https://www.npmjs.com/package/opal-sprites" target="_blank" rel="noopener">opal-sprites</a></p></div>
+  <dialog id="modal"></dialog>
+</div>
+<script type="module" src="src/game.js"></script>
+</body>
+</html>
