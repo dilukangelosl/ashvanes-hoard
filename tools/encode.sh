@@ -23,5 +23,7 @@ e -o $O/winframe.opal --crf 24 --fps 12 --scale 0.35 $(r winframe winframe)
 e -o $O/pillar.opal  --crf 24 --fps 12 --scale 0.4 $(r pillar pillar)
 e -o $O/dragon.opal  --crf 23 --fps 12 --scale 0.6 $(r idle d_idle)
 e -o $O/breath.opal  --crf 24 --fps 12 --scale 0.4 --once breath $(r breath d_breath_f)
-e -o $O/fx.opal      --crf 24 --fps 12 --scale 0.4 --once shatter --once coinburst --once magic --once smoke --once eruption \
-  $(r shatter shatter) $(r coinburst coinburst_f) $(r magic magic) $(r smoke smoke) $(r eruption eruption_f)
+e -o $O/fx.opal      --crf 24 --fps 12 --scale 0.4 --once shatter --once coinburst --once magic --once smoke \
+  $(r shatter shatter) $(r coinburst coinburst_f) $(r magic magic) $(r smoke smoke)
+e -o $O/eruption.opal --crf 24 --fps 12 --scale 0.7 --once eruption $(r eruption eruption_f)
+e -o $O/seal.opal    --crf 23 --fps 12 --scale 0.5 $(r seal seal_f)

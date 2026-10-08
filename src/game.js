@@ -92,7 +92,7 @@ class Spr {
 }
 // one-shot effect: pops in, plays once, fades over its last quarter, removes itself
 function burst(clip, x, y, size, { speed = 1, s0 = 0.45 } = {}) {
-  const f = new Spr(A.fx, clip, { size, x, y });
+  const f = new Spr(clip === 'eruption' ? A.eruption : A.fx, clip, { size, x, y });
   f.s = s0; f.once = true; opal.speed(f.id, speed / Math.max(T, 0.5));
   f.fade = () => { const p = opal.progress(f.id); return p > 0.75 ? (1 - p) / 0.25 : 1; };
   tween(f, { s: 1 }, 0.2, ease.back);
@@ -250,7 +250,7 @@ function resize() {
   Object.assign(world.style, { width: w + 'px', height: h + 'px', left: Math.round((vw - w) / 2) + 'px', top: Math.round((vh - h) / 2) + 'px' });
   world.classList.toggle('fill', w >= vw - 2 && h >= vh - 2);
   view.ox = 0; view.oy = 0;
-  view.dpr = Math.min(devicePixelRatio || 1, MOBILE ? 1.75 : 2);
+  view.dpr = Math.min(devicePixelRatio || 1, MOBILE ? 2.5 : 2);
   for (const c of [cv, fxc]) { c.width = Math.round(w * view.dpr); c.height = Math.round(h * view.dpr); }
   for (const id of ['under', 'top']) Object.assign($(id).style, { width: L.W + 'px', height: L.H + 'px', transform: `scale(${view.k})` });
   const bw = L.cell * CW * E.COLS, bh = L.cell * E.ROWS;
@@ -505,25 +505,54 @@ function centerOf(el) {
   return [(r.left + r.width / 2 - wr.left) / view.k, (r.top + r.height / 2 - wr.top) / view.k];
 }
 
+const boardCenter = () => [L.board[0] + (L.cell * CW * E.COLS) / 2, L.board[1] + (L.cell * E.ROWS) / 2];
+// a big styled title over the board (feature triggers, retriggers)
+async function titleCard(main, sub = '', dur = 2.4) {
+  const t = $('title');
+  t.innerHTML = `<div class="tMain">${main}</div>${sub ? `<div class="tSub"><span>${sub}</span></div>` : ''}`;
+  t.style.top = L.banner - 30 + 'px';
+  t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  t.style.animationDuration = dur * T + 's';
+  await wait(dur * 0.85);
+}
+
+// Vault Keys: the keys burn, a golden vault seal forms over the board and the keys fly into it
 async function keys(step, free) {
+  const keySp = step.cells.map(([c, r]) => grid[c][r]).filter(Boolean);
+  scrim(true);
+  grid.flat().forEach((sp) => sp && sp.sym !== E.KEY && tween(sp, { op: 0.18 }, 0.3));
+  const frames = keySp.map((sp) => { const f = new Spr(A.wf, 'winframe', { size: L.cell * CW * 1.32, x: sp.x, y: sp.y }).desync(); f.op = 0; tween(f, { op: 1 }, 0.2); return f; });
   SFX.key();
-  for (const [c, r] of step.cells) {
-    const sp = grid[c][r], [x, y] = cellXY(c, r);
-    burst('coinburst', x, y, L.cell * 2.2);
-    ring(x, y, L.cell, '#ffd774');
-    if (sp) tween(sp, { s: 1.4 }, 0.2, ease.back).then(() => tween(sp, { s: 1.1 }, 0.4));
-  }
-  await wait(0.6);
+  keySp.forEach((sp, i) => tween(sp, { s: 1.35 }, 0.18, ease.back, i * 0.08).then(() => tween(sp, { s: 1.1 }, 0.3)));
+  await wait(0.8);
+  const [bx, by] = boardCenter();
+  const seal = new Spr(A.seal, 'seal', { size: L.cell * CW * (free ? 3.6 : 4.6), x: bx, y: by }).desync();
+  seal.op = 0; seal.s = 0.25;
+  tween(seal, { op: 1, s: 1 }, 0.6, ease.back);
+  SFX.boom(); shake(); ring(bx, by, 520, '#ffd774');
+  await wait(0.45);
+  await Promise.all(keySp.map((sp, i) => {
+    tween(frames[i], { op: 0 }, 0.2).then(() => frames[i].kill());
+    return tween(sp, { x: bx, y: by, s: 0.35 }, 0.42, ease.in, 0.1 + i * 0.16).then(() => {
+      sp.op = 0; SFX.coin(); spark(bx, by, 18, '#ffd774', 520);
+      burst('magic', bx, by, L.cell * 2.2);
+      tween(seal, { s: 1.08 }, 0.08).then(() => tween(seal, { s: 1 }, 0.25, ease.back));
+    });
+  }));
   if (free) {
     S.fsLeft += step.spins; $('fsLeft').textContent = S.fsLeft;
     $('fsLeft').classList.remove('pulse'); void $('fsLeft').offsetWidth; $('fsLeft').classList.add('pulse');
-    await banner(`+${step.spins} free spins`, 1.8);
+    await titleCard(`+${step.spins} free spins`, 'The Treasury holds', 2);
   } else {
     setWin(S.units + step.pay, true);
-    const bc = [L.board[0] + (L.cell * CW * E.COLS) / 2, L.board[1] + (L.cell * E.ROWS) / 2];
-    burst('eruption', ...bc, L.cell * 7, { speed: 0.9 }); SFX.boom(); shake(); coins(50);
-    await banner(`${step.n} vault keys<small>The Molten Treasury opens</small>`, 2.4);
+    pop(`+${fmt(step.pay * bet())}`, bx, by + L.cell * 2.2);
+    coins(40);
+    await titleCard('The Molten Treasury', `${step.spins} free spins`, 2.6);
   }
+  await tween(seal, { op: 0, s: 1.4 }, 0.35, ease.in);
+  seal.kill();
+  scrim(false);
+  if (free) grid.flat().forEach((sp) => sp && sp.sym !== E.KEY && tween(sp, { op: 1 }, 0.3));
 }
 
 async function playSpin(spin, free = false) {
@@ -816,11 +845,13 @@ async function boot() {
   }
   // load order is draw order: the frame over the symbols (it masks them as they fall in and out),
   // the dragon's fire over everything
-  const files = [['brazier'], ['props'], ['logo'], ['crew'], ['sym', 'symbols'], ['board'], ['wf', 'winframe'], ['pillar'], ['dragon'], ['breath'], ['fx']];
+  const files = [['brazier'], ['props'], ['logo'], ['crew'], ['sym', 'symbols'], ['board'], ['wf', 'winframe'], ['pillar'], ['dragon'], ['breath'], ['seal'], ['fx'], ['eruption']];
   let done = 0;
-  const scale = MOBILE ? 0.6 : 1;
+  // Phones: small sprites at full resolution (their screens are 3x dense), the biggest at ~80%,
+  // and no mipmaps (sprites draw near native size there), which keeps GPU memory in check.
+  const MOB = { board: 0.85, dragon: 0.85, breath: 0.8, logo: 0.85, eruption: 0.8, seal: 0.85, brazier: 0.6 };
   for (const [k, f = k] of files) {
-    A[k] = await opal.load(`media/${f}.opal`, { scale });
+    A[k] = await opal.load(`media/${f}.opal`, MOBILE ? { scale: MOB[k] ?? 1, mipmaps: false } : {});
     $('lfill').style.width = (++done / files.length) * 100 + '%';
   }
   window.__opal = { assets: Object.fromEntries(Object.entries(A).map(([k, a]) => [k, { frames: a.frames, vram: a.vram, clips: Object.keys(a.clips) }])) };
