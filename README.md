@@ -3,7 +3,7 @@
 **A dragon-heist slot where everything that moves is a transparent video.** The dragon, its fire breath, the
 animated lava frame, every symbol, the treasure chest, the braziers, the logo and every burst, shatter, flame
 pillar and coin eruption are AI-generated video clips, keyed and packed into `.opal` files by
-[Opal](https://github.com/dilukangelosl/opal) and played by [`opal-sprites`](https://www.npmjs.com/package/opal-sprites)
+Opal and played by [`opal-sprites`](https://www.npmjs.com/package/opal-sprites)
 straight from npm.
 
 **[Play it](https://dilukangelosl.github.io/ashvanes-hoard/)** (desktop or phone, demo credits)
@@ -77,7 +77,6 @@ Append `?seeds=537` to the URL to replay an exact round, `?wrath=7` to start one
 python3 -m http.server 8766   # then open http://localhost:8766
 ```
 
-Source clips (`assets/`) are not committed. The prompts and recipe are above and in the
-[opal-video-sprites skill](https://github.com/dilukangelosl/opal/tree/main/.claude/skills/opal-video-sprites).
+Source clips (`assets/`) are not committed. The prompts and recipe are above.
 
 MIT © Diluk Angelo. Demo only: no real money.

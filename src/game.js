@@ -794,7 +794,7 @@ function paytable() {
     <h4>Maths</h4>
     <p>Simulated RTP about 96–97% (base game) and 95.7% (bonus buy) over millions of rounds, see <code>tools/sim.mjs</code>. Maximum win ${E.MAX_WIN.toLocaleString()}× the bet. Demo credits only.</p>
     <h4>Built with Opal</h4>
-    <p>Every symbol, the dragon, the crew and every burst, flame and coin shower is a transparent video sprite generated with AI, keyed and packed by <a href="https://github.com/dilukangelosl/opal">Opal</a> and played by <a href="https://www.npmjs.com/package/opal-sprites">opal-sprites</a>: ${Object.values(A).reduce((s, a) => s + a.frames, 0)} video frames, ${(Object.values(A).reduce((s, a) => s + a.bytes, 0) / 1048576).toFixed(1)} MB of .opal files, one draw call per file.</p>`);
+    <p>Every symbol, the dragon, the crew and every burst, flame and coin shower is a transparent video sprite generated with AI, keyed and packed by Opal and played by <a href="https://www.npmjs.com/package/opal-sprites">opal-sprites</a>: ${Object.values(A).reduce((s, a) => s + a.frames, 0)} video frames, ${(Object.values(A).reduce((s, a) => s + a.bytes, 0) / 1048576).toFixed(1)} MB of .opal files, one draw call per file.</p>`);
 }
 function bind() {
   $('spin').onclick = () => { if (S.busy && S.auto) { S.auto = 0; hud(); } else spinRound(); };
